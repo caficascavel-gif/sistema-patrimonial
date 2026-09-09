@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Controle Patrimonial</title>
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+
+<!-- ===================== TELA DE LOGIN ===================== -->
+<div id="tela-login">
+  <form class="caixa-login" id="form-login">
+    <h1>Sistema de Controle Patrimonial<br>Secretaria Municipal de Saúde</h1>
+    <div class="grupo-form">
+      <label>Usuário</label>
+      <input type="text" id="login-usuario" required autofocus>
+    </div>
+    <div class="grupo-form" style="margin-top:10px;">
+      <label>Senha</label>
+      <input type="password" id="login-senha" required>
+    </div>
+    <div class="mensagem-erro oculto" id="login-erro"></div>
+    <button type="submit" style="width:100%; margin-top:16px;">Entrar</button>
+  </form>
+</div>
+
+<!-- ===================== APP (depois do login) ===================== -->
+<div id="app" class="oculto">
+  <div id="cabecalho">
+    <h1>PATRIMÔNIOS</h1>
+    <nav>
+      <button class="secundario" data-tela="principal">🔎 Pesquisar</button>
+      <button class="secundario" data-tela="dashboard">📈 Dashboard</button>
+      <button class="secundario" data-tela="relatorios">📊 Relatórios</button>
+      <button class="secundario" data-tela="cadastros">🗂️ Cadastros</button>
+      <button class="secundario oculto" id="botao-auditoria" data-tela="auditoria">🕵️ Auditoria</button>
+      <button class="secundario oculto" id="botao-usuarios" data-tela="usuarios">👤 Usuários</button>
+    </nav>
+    <span class="usuario-info" id="info-usuario-logado"></span>
+    <button class="secundario" id="botao-sair">Sair</button>
+  </div>
+
+  <main>
+    <!-- ---- Tela: Pesquisa + lista ---- -->
+    <section class="tela" id="tela-principal">
+      <div class="cartao">
+        <div class="linha-form">
+          <input type="text" id="campo-busca" placeholder="🔎 patrimônio, equipamento, IPM, empenho, fornecedor, número de série…" style="flex:1;">
+          <button id="botao-pesquisar">Pesquisar</button>
+          <button class="secundario" id="botao-novo-patrimonio">+ Novo patrimônio</button>
+        </div>
+        <table>
+          <thead><tr><th>Patrimônio</th><th>Equipamento</th><th>Local</th><th>Situação</th><th>Cadastro</th></tr></thead>
+          <tbody id="tabela-patrimonios"></tbody>
+        </table>
+        <p id="contador-resultados" class="mensagem-info"></p>
+      </div>
+    </section>
+
+    <!-- ---- Tela: Dashboard ---- -->
+    <section class="tela oculto" id="tela-dashboard">
+      <div class="cartao">
+        <h2>Indicadores</h2>
+        <div class="grade-cartoes" id="grade-indicadores"></div>
+        <h2>Pendências</h2>
+        <div id="lista-pendencias"></div>
+      </div>
+    </section>
+
+    <!-- ---- Tela: Relatórios ---- -->
+    <section class="tela oculto" id="tela-relatorios">
+      <div class="cartao">
+        <h2>Relatórios</h2>
+        <div class="linha-form" id="lista-botoes-relatorio"></div>
+      </div>
+      <div class="cartao oculto" id="cartao-resultado-relatorio">
+        <div class="linha-form">
+          <h2 id="titulo-relatorio" style="flex:1;"></h2>
+          <button class="secundario" id="botao-exportar-csv">Exportar CSV</button>
+          <button class="secundario" id="botao-imprimir-relatorio">🖨️ Imprimir</button>
+        </div>
+        <table><thead id="cabecalho-relatorio"></thead><tbody id="corpo-relatorio"></tbody></table>
+      </div>
+    </section>
+
+    <!-- ---- Tela: Cadastros básicos ---- -->
+    <section class="tela oculto" id="tela-cadastros">
+      <div class="cartao">
+        <h2>Cadastros básicos</h2>
+        <div class="linha-form" id="lista-botoes-cadastro"></div>
+      </div>
+      <div class="cartao oculto" id="cartao-cadastro-ativo">
+        <h2 id="titulo-cadastro-ativo"></h2>
+        <div id="formulario-cadastro-ativo"></div>
+        <table style="margin-top:16px;">
+          <thead id="cabecalho-cadastro-ativo"></thead>
+          <tbody id="corpo-cadastro-ativo"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---- Tela: Auditoria (Administrador) ---- -->
+    <section class="tela oculto" id="tela-auditoria">
+      <div class="cartao">
+        <h2>Auditoria</h2>
+        <table>
+          <thead><tr><th>Data/hora</th><th>Usuário</th><th>Patrimônio</th><th>Campo</th><th>Antes</th><th>Depois</th></tr></thead>
+          <tbody id="tabela-auditoria"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---- Tela: Usuários (Administrador) ---- -->
+    <section class="tela oculto" id="tela-usuarios">
+      <div class="cartao">
+        <h2>Usuários</h2>
+        <button id="botao-novo-usuario" style="margin-bottom:12px;">+ Novo usuário</button>
+        <table>
+          <thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Ativo</th><th></th></tr></thead>
+          <tbody id="tabela-usuarios"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ===================== MODAL: Ficha do patrimônio ===================== -->
+<div id="modal-ficha" class="modal-fundo oculto">
+  <div class="modal-caixa">
+    <div class="modal-cabecalho">
+      <div class="linha-topo">
+        <div>
+          <div id="ficha-titulo" style="font-size:18px; font-weight:bold;"></div>
+          <div id="ficha-situacao"></div>
+        </div>
+        <div>
+          <span id="ficha-contador" style="margin-right:12px; color:#555;"></span>
+          <button class="secundario" id="ficha-anterior">← Anterior</button>
+          <button class="secundario" id="ficha-proximo">Próximo →</button>
+          <button class="secundario" id="ficha-fechar">Fechar ✕</button>
+        </div>
+      </div>
+      <div class="abas" id="ficha-abas">
+        <button class="aba-botao ativa" data-aba="cadastro">Cadastro</button>
+        <button class="aba-botao" data-aba="historico">Histórico</button>
+        <button class="aba-botao" data-aba="movimentacoes">Movimentações</button>
+        <button class="aba-botao" data-aba="manutencao">Manutenção</button>
+        <button class="aba-botao" data-aba="garantia">Garantia</button>
+        <button class="aba-botao" data-aba="anotacoes">Anotações</button>
+        <button class="aba-botao" data-aba="documentos">Documentos</button>
+      </div>
+    </div>
+    <div class="modal-corpo" id="ficha-corpo"></div>
+  </div>
+</div>
+
+<!-- Cada arquivo é um "módulo" simples (sem empacotador) -->
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/login.js"></script>
+<script src="js/principal.js"></script>
+<script src="js/ficha.js"></script>
+<script src="js/cadastros.js"></script>
+<script src="js/relatorios.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/auditoria.js"></script>
+<script src="js/usuarios.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

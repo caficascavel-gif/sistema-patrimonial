@@ -1,0 +1,16 @@
+# Configuração do Cloudflare Tunnel — Sistema de Controle Patrimonial
+#
+# Este arquivo tem 2 valores que só existem DEPOIS que você criar o túnel
+# (Parte 5 do guia GUIA_UNICO.md). Até lá, ele fica com "PREENCHER-DEPOIS"
+# no lugar.
+
+tunnel: PREENCHER-DEPOIS-COM-O-TUNNEL-ID
+credentials-file: C:\PatrimonioPortatil\cloudflare\PREENCHER-DEPOIS-COM-O-TUNNEL-ID.json
+
+ingress:
+  # Troque pelo endereço que você registrou no FreeDNS (ex: patrimoniocascavel.mooo.com)
+  - hostname: SEUSUBDOMINIO.SEUDOMINIOFREEDNS.com
+    service: http://localhost:8000
+  # Regra "pega-tudo": qualquer outro endereço que bater nesse túnel e não for
+  # o de cima recebe um 404 simples, em vez de erro estranho.
+  - service: http_status:404

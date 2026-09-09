@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Controle Patrimonial</title>
+<style>
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    background: #f4f5f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+  }
+  .cartao {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 40px 32px;
+    max-width: 420px;
+    text-align: center;
+  }
+  h1 { font-size: 20px; margin-bottom: 8px; }
+  p { color: #555; line-height: 1.5; }
+  .status-verificando { color: #888; }
+  .status-fora { color: #b91c1c; }
+  button {
+    margin-top: 16px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button:hover { background: #1d4ed8; }
+</style>
+</head>
+<body>
+  <div class="cartao">
+    <h1>Sistema de Controle Patrimonial</h1>
+    <p id="mensagem" class="status-verificando">Verificando conexão com o sistema…</p>
+    <button id="botaoTentar" style="display:none" onclick="verificarEEntrar()">Tentar novamente</button>
+  </div>
+
+<script>
+  // Troque pelo endereço real definido na Etapa 2 (o mesmo do config.yml do túnel)
+  const URL_SISTEMA = "https://SEUSUBDOMINIO.SEUDOMINIOFREEDNS.com/app/";
+
+  const TEMPO_LIMITE_MS = 5000;
+
+  function nomeProximoRetorno() {
+    const diasSemana = ["domingo", "segunda-feira", "terça-feira", "quarta-feira",
+                         "quinta-feira", "sexta-feira", "sábado"];
+    const agora = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const diaSemana = agora.getDay();
+    const hora = agora.getHours();
+
+    // Ainda hoje, antes das 7h, num dia útil -> volta hoje mesmo
+    if (hora < 7 && diaSemana >= 1 && diaSemana <= 5) {
+      return "hoje às 07h";
+    }
+
+    // Acha o próximo dia útil (pula sábado e domingo)
+    const proximo = new Date(agora);
+    do {
+      proximo.setDate(proximo.getDate() + 1);
+    } while (proximo.getDay() === 0 || proximo.getDay() === 6);
+
+    const amanha = new Date(agora);
+    amanha.setDate(amanha.getDate() + 1);
+
+    if (proximo.toDateString() === amanha.toDateString()) {
+      return "amanhã às 07h";
+    }
+    return `${diasSemana[proximo.getDay()]} às 07h`;
+  }
+
+  async function verificarEEntrar() {
+    const mensagem = document.getElementById("mensagem");
+    const botao = document.getElementById("botaoTentar");
+    mensagem.className = "status-verificando";
+    mensagem.textContent = "Verificando conexão com o sistema…";
+    botao.style.display = "none";
+
+    const controlador = new AbortController();
+    const tempoEsgotado = setTimeout(() => controlador.abort(), TEMPO_LIMITE_MS);
+
+    try {
+      // modo "no-cors": não conseguimos ler a resposta, só saber se a
+      // conexão foi possível — é o suficiente pra saber se o sistema está no ar.
+      await fetch(URL_SISTEMA, { mode: "no-cors", signal: controlador.signal });
+      clearTimeout(tempoEsgotado);
+      window.location.replace(URL_SISTEMA);
+    } catch (erro) {
+      clearTimeout(tempoEsgotado);
+      mensagem.className = "status-fora";
+      mensagem.textContent =
+        `Sistema fora do ar no momento. Retorna no próximo dia útil, ${nomeProximoRetorno()}.`;
+      botao.style.display = "inline-block";
+    }
+  }
+
+  verificarEEntrar();
+</script>
+</body>
+</html>
