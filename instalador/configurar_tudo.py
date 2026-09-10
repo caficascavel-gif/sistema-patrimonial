@@ -74,9 +74,10 @@ def inicializar_mysql_se_necessario():
     print("MySQL inicializado com sucesso.")
 
 
-def mysql_esta_rodando():
+def mysql_esta_rodando(porta=None):
+    porta = porta or PORTA_MYSQL
     try:
-        conexao = pymysql.connect(host="127.0.0.1", port=PORTA_MYSQL, user="root", password="", connect_timeout=2)
+        conexao = pymysql.connect(host="127.0.0.1", port=porta, user="root", password="", connect_timeout=2)
         conexao.close()
         return True
     except pymysql.err.OperationalError as erro:
@@ -86,10 +87,33 @@ def mysql_esta_rodando():
         return erro.args[0] == 1045
 
 
+def detectar_mysql_ja_ativo():
+    """
+    Procura um MySQL já rodando e pronto pra uso: primeiro na porta que o
+    projeto usa por padrão (3307), depois na porta padrão do MySQL (3306).
+    Isso cobre o caso de já existir um serviço de MySQL rodando na máquina
+    (às vezes instalado como serviço do Windows, ex.: "patrimonioMySQL267")
+    antes mesmo do configurador rodar — nesse caso não faz sentido abrir
+    OUTRO mysqld.exe por cima; só usamos o que já está no ar.
+    """
+    for porta in (PORTA_MYSQL, 3306):
+        if mysql_esta_rodando(porta):
+            return porta
+    return None
+
+
 def ligar_mysql_se_necessario():
+    global PORTA_MYSQL
     passo("Verificando se o MySQL está ligado")
-    if mysql_esta_rodando():
-        print("MySQL já está rodando.")
+
+    porta_ativa = detectar_mysql_ja_ativo()
+    if porta_ativa is not None:
+        if porta_ativa != PORTA_MYSQL:
+            print(f"Já existe um MySQL rodando na porta {porta_ativa} nesta máquina")
+            print("(provavelmente um serviço já instalado) — vamos usar ele em vez de abrir outro.")
+            PORTA_MYSQL = porta_ativa
+        else:
+            print("MySQL já está rodando.")
         return
 
     print("Ligando o MySQL em segundo plano...")
@@ -98,12 +122,13 @@ def ligar_mysql_se_necessario():
         [str(mysqld), f"--defaults-file={MY_INI}", "--console"],
         creationflags=subprocess.CREATE_NEW_CONSOLE,
     )
-    for _ in range(20):
+    for _ in range(30):
         time.sleep(1)
         if mysql_esta_rodando():
             print("MySQL no ar.")
             return
-    print("ERRO: o MySQL não respondeu depois de 20 segundos.")
+    print("ERRO: o MySQL não respondeu depois de 30 segundos.")
+    print("Se já existe outro MySQL ou XAMPP rodando nesta máquina, feche-o e tente de novo.")
     input("Pressione Enter para sair...")
     sys.exit(1)
 
