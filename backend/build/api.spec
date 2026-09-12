@@ -15,7 +15,10 @@ a = Analysis(
     [str(BACKEND_DIR / 'run_server.py')],
     pathex=[str(BACKEND_DIR)],
     binaries=[],
-    datas=[],
+    # A pasta static/ (index.html, css, js da tela web) precisa ir junto no
+    # .exe, senão a rota /app fica sem montar (a checagem em main.py só monta
+    # se a pasta existir) e dá 404 em tudo que é /app/...
+    datas=[(str(BACKEND_DIR / 'app' / 'static'), 'app/static')],
     # O FastAPI/uvicorn/SQLAlchemy fazem vários imports "dinâmicos" que o
     # PyInstaller sozinho não descobre analisando o código só de olho —
     # por isso listamos manualmente aqui. Se faltar algum, o sintoma é um
