@@ -49,6 +49,20 @@ def status_api():
 # se o sistema está no ar). O JS da tela web chama a API com caminhos absolutos
 # (ex: "/auth/login"), então funciona tudo na mesma origem, sem CORS e sem precisar
 # configurar endereço de servidor nenhum.
-_PASTA_ESTATICA = Path(__file__).resolve().parent / "static"
+#
+# IMPORTANTE: a pasta "static" é procurada AO LADO do .exe no disco (não dentro
+# do .exe compilado). Isso é de propósito: qualquer ajuste visual (cor, texto,
+# logo) vira só editar os arquivos direto em C:\PatrimonioPortatil\api\static\
+# no PC ponto — sem nunca precisar recompilar nem substituir o .exe de novo.
+import sys
+
+if getattr(sys, "frozen", False):
+    # Rodando como .exe compilado (PyInstaller) — usa a pasta onde o .exe está.
+    _BASE = Path(sys.executable).resolve().parent
+else:
+    # Rodando como script Python normal (desenvolvimento).
+    _BASE = Path(__file__).resolve().parent
+
+_PASTA_ESTATICA = _BASE / "static"
 if _PASTA_ESTATICA.exists():
     app.mount("/app", StaticFiles(directory=str(_PASTA_ESTATICA), html=True), name="frontend")
